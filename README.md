@@ -4,17 +4,6 @@ We try our best to beat SOTA in this project for Penn course ESE_5380
 We provide a neat code base to evaluate advanced deep time series models or develop your model, which covers five mainstream tasks: **long- and short-term forecasting, imputation, anomaly detection, and classification.**
 
 
-## Leaderboard for Time Series Analysis
-
-Till March 2024, the top three models for five different tasks are:
-
-| Model<br>Ranking | Long-term<br>Forecasting<br>Look-Back-96              | Long-term<br/>Forecasting<br/>Look-Back-Searching     | Short-term<br>Forecasting                                    | Imputation                                                   | Classification                                               | Anomaly<br>Detection                               |
-| ---------------- | ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------------- |
-| 🥇 1st            | [TimeXer](https://arxiv.org/abs/2402.19072)      | [TimeMixer](https://openreview.net/pdf?id=7oLshfEIC2) | [TimesNet](https://arxiv.org/abs/2210.02186)                 | [TimesNet](https://arxiv.org/abs/2210.02186)                 | [TimesNet](https://arxiv.org/abs/2210.02186)                 | [TimesNet](https://arxiv.org/abs/2210.02186)       |
-| 🥈 2nd            | [iTransformer](https://arxiv.org/abs/2310.06625) | [PatchTST](https://github.com/yuqinie98/PatchTST)     | [Non-stationary<br/>Transformer](https://github.com/thuml/Nonstationary_Transformers) | [Non-stationary<br/>Transformer](https://github.com/thuml/Nonstationary_Transformers) | [Non-stationary<br/>Transformer](https://github.com/thuml/Nonstationary_Transformers) | [FEDformer](https://github.com/MAZiqing/FEDformer) |
-| 🥉 3rd            | [TimeMixer](https://openreview.net/pdf?id=7oLshfEIC2)          | [DLinear](https://arxiv.org/pdf/2205.13504.pdf)       | [FEDformer](https://github.com/MAZiqing/FEDformer)           | [Autoformer](https://github.com/thuml/Autoformer)            | [Informer](https://github.com/zhouhaoyi/Informer2020)        | [Autoformer](https://github.com/thuml/Autoformer)  |
-
-
 **Note: We will keep updating this leaderboard.** If you have proposed advanced and awesome models, you can send us your paper/code link or raise a pull request. We will add them to this repo and update the leaderboard as soon as possible.
 
 **Compared models of this leaderboard.** ☑ means that their codes have already been included in this repo.
@@ -96,41 +85,6 @@ Note:
 
 (2) About anomaly detection: Some discussion about the adjustment strategy in anomaly detection can be found [here](https://github.com/thuml/Anomaly-Transformer/issues/14). The key point is that the adjustment strategy corresponds to an event-level metric.
 
-## Citation
-
-If you find this repo useful, please cite our paper.
-
-```
-@inproceedings{wu2023timesnet,
-  title={TimesNet: Temporal 2D-Variation Modeling for General Time Series Analysis},
-  author={Haixu Wu and Tengge Hu and Yong Liu and Hang Zhou and Jianmin Wang and Mingsheng Long},
-  booktitle={International Conference on Learning Representations},
-  year={2023},
-}
-
-@article{wang2024tssurvey,
-  title={Deep Time Series Models: A Comprehensive Survey and Benchmark},
-  author={Yuxuan Wang and Haixu Wu and Jiaxiang Dong and Yong Liu and Mingsheng Long and Jianmin Wang},
-  booktitle={arXiv preprint arXiv:2407.13278},
-  year={2024},
-}
-```
-
-## Contact
-If you have any questions or suggestions, feel free to contact our maintenance team:
-
-Current:
-- Haixu Wu (Ph.D. student, wuhx23@mails.tsinghua.edu.cn)
-- Yong Liu (Ph.D. student, liuyong21@mails.tsinghua.edu.cn)
-- Huikun Weng (Undergraduate, wenghk22@mails.tsinghua.edu.cn)
-
-Previous:
-- Yuxuan Wang (Ph.D. student, wangyuxu22@mails.tsinghua.edu.cn)
-- Tengge Hu (Master student, htg21@mails.tsinghua.edu.cn)
-- Haoran Zhang (Master student, z-hr20@mails.tsinghua.edu.cn)
-- Jiawei Guo (Undergraduate, guo-jw21@mails.tsinghua.edu.cn)
-
-Or describe it in Issues.
 
 ## Acknowledgement
 
