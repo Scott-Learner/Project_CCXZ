@@ -1,11 +1,8 @@
-# Project_CCXZ
-We try our best to beat SOTA in this project for Penn course ESE_5380
-
-We provide a neat code base to evaluate advanced deep time series models or develop your model, which covers five mainstream tasks: **long- and short-term forecasting, imputation, anomaly detection, and classification.**
+# Project_CCXZ: Learnable Wavelet Transformer for Time-Series Forecasting
+We try our best to beat SOTA in this project for Penn course ESE_5380.
 
 
-**Note: We will keep updating this leaderboard.** If you have proposed advanced and awesome models, you can send us your paper/code link or raise a pull request. We will add them to this repo and update the leaderboard as soon as possible.
-
+## Previous Models
 **Compared models of this leaderboard.** ☑ means that their codes have already been included in this repo.
   - [x] **TimeXer** - TimeXer: Empowering Transformers for Time Series Forecasting with Exogenous Variables [[NeurIPS 2024]](https://arxiv.org/abs/2402.19072) [[Code]](https://github.com/thuml/Time-Series-Library/blob/main/models/TimeXer.py)
   - [x] **TimeMixer** - TimeMixer: Decomposable Multiscale Mixing for Time Series Forecasting [[ICLR 2024]](https://openreview.net/pdf?id=7oLshfEIC2) [[Code]](https://github.com/thuml/Time-Series-Library/blob/main/models/TimeMixer.py).
