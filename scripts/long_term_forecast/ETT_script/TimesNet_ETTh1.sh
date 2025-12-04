@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0  # Use GPU 0 (only 1 GPU available)
 
 model_name=TimesNet
 
