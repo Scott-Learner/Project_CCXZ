@@ -3,7 +3,7 @@ import torch
 from models import Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer, \
     Informer, LightTS, Reformer, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, FiLM, iTransformer, \
     Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN, MambaSimple, TemporalFusionTransformer, SCINet, PAttn, TimeXer, \
-    WPMixer, MultiPatchFormer, KANAD, MSGNet, TimeFilter
+    WPMixer, WPMixer_MultiWavelet, MultiPatchFormer, KANAD, MSGNet, TimeFilter
 
 
 class Exp_Basic(object):
@@ -38,6 +38,7 @@ class Exp_Basic(object):
             'PAttn': PAttn,
             'TimeXer': TimeXer,
             'WPMixer': WPMixer,
+            'WPMixer_MultiWavelet': WPMixer_MultiWavelet,
             'MultiPatchFormer': MultiPatchFormer,
             'KANAD': KANAD,
             'MSGNet': MSGNet,
@@ -49,6 +50,7 @@ class Exp_Basic(object):
             self.model_dict['Mamba'] = Mamba
 
         self.device = self._acquire_device()
+        print(self.device)
         self.model = self._build_model().to(self.device)
 
     def _build_model(self):
