@@ -28,3 +28,9 @@ mse:0.3821203410625458, mae:0.4114024043083191, dtw:Not calculated
 long_term_forecast_wpmixer_multiwavelet_WPMixer_MultiWavelet_ETTh1_ftM_sl512_ll0_pl192_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
 mse:0.4408758282661438, mae:0.44120949506759644, dtw:Not calculated
 
+long_term_forecast_ETTh1_512_96_LWPTMixer_ETTh1_ftM_sl512_ll48_pl512_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_Quick_Test_0  
+mse:0.4761461317539215, mae:0.47825655341148376, dtw:Not calculated
+
+long_term_forecast_ETTh1_512_96_LWPTMixer_ETTh1_ftM_sl512_ll48_pl512_dm128_nh8_el2_dl1_df1024_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_Quick_Test_0  
+mse:0.5065308213233948, mae:0.4900350272655487, dtw:Not calculated
+
