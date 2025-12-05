@@ -12,7 +12,7 @@ x is always [batch, channel, seq].
 import torch
 import torch.nn as nn
 
-from NeuralDWAV import NeuralDWAV
+from layers.NeuralDWAV import NeuralDWAV
 
 
 class Decomposition(nn.Module):
@@ -200,16 +200,16 @@ class Decomposition(nn.Module):
         B, C, T = x.shape
 
         # Flatten channels into batch, as NeuralDWAV is single-channel.
-        x_flat = x.view(B * C, 1, T)
+        x_flat = x.contiguous().view(B * C, 1, T)
 
         embeddings = self.ndwav.LDWT(x_flat)
         # embeddings[0..level-1]: detail bands
         # embeddings[level]: approximation band
 
-        yl = embeddings[self.level].view(B, C, -1)
+        yl = embeddings[self.level].contiguous().view(B, C, -1)
         yh = []
         for i in range(self.level):
-            yh_i = embeddings[i].view(B, C, -1)
+            yh_i = embeddings[i].contiguous().view(B, C, -1)
             yh.append(yh_i)
 
         if self.affine:

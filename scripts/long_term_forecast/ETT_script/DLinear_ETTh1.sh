@@ -5,7 +5,7 @@ model_name=DLinear
 python -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
-  --root_path ./dataset/ETT-small/ \
+  --root_path ./data/ETT/ \
   --data_path ETTh1.csv \
   --model_id ETTh1_96_96 \
   --model $model_name \
@@ -26,7 +26,7 @@ python -u run.py \
 python -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
-  --root_path ./dataset/ETT-small/ \
+  --root_path ./data/ETT/ \
   --data_path ETTh1.csv \
   --model_id ETTh1_96_192 \
   --model $model_name \
@@ -47,7 +47,7 @@ python -u run.py \
 python -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
-  --root_path ./dataset/ETT-small/ \
+  --root_path ./data/ETT/ \
   --data_path ETTh1.csv \
   --model_id ETTh1_96_336 \
   --model $model_name \
@@ -68,7 +68,7 @@ python -u run.py \
 python -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
-  --root_path ./dataset/ETT-small/ \
+  --root_path ./data/ETT/ \
   --data_path ETTh1.csv \
   --model_id ETTh1_96_720 \
   --model $model_name \
