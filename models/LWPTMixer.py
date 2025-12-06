@@ -256,10 +256,10 @@ class WPMixerCore(nn.Module):
 
         xA, xD = self.Decomposition_model.transform(x)
 
-        yA = self.resolutionBranch[0](xA)
+        yA = torch.concat((xA, self.resolutionBranch[0](xA)), dim=2)[:, :, -self.input_w_dim[0]:]
         yD = []
         for i in range(len(xD)):
-            yD_i = self.resolutionBranch[i + 1](xD[i])
+            yD_i = torch.concat((xD[i], self.resolutionBranch[i + 1](xD[i])), dim=2)[:, :, -self.input_w_dim[i+1]:]
             yD.append(yD_i)
 
         y = self.Decomposition_model.inv_transform(yA, yD)
