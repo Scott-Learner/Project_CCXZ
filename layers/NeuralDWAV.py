@@ -15,7 +15,7 @@ class NeuralDWAV(nn.Module):
                  Filt_Trans = True, ### If you want the inverse transform "True" 
                  Filt_Train = True, #or "False" trainable or not
                  Filt_Tfree = False, #or free transposed layer or not
-                 Filt_Style = "Filter_Free", #or "Module_Free", "Layer_Free", "Kernel_Free"
+                 Filt_Style = "Layer_Free", #or "Module_Free", "Layer_Free", "Kernel_Free"
                  Filt_Mother = "db4",
                  Act_Train = True, #or "False"
                  Act_Style = "Sigmoid", #or "Soft", "Hard"
