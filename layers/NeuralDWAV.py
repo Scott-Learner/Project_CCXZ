@@ -173,7 +173,8 @@ class Filter(nn.Module):
         kernelInit = pywt.Wavelet(Filt_Mother).filter_bank[0]
         kernelInit = np.array(kernelInit)[np.newaxis, np.newaxis, :].copy()
         self.lK = len(kernelInit[0][0])  # Number of kernel parameter
-        self.cmf = torch.tensor(np.array([(-1)**(i) for i in range(self.lK)])[np.newaxis, np.newaxis, :], dtype=torch.float32)
+        # Register as buffer so it moves with model to GPU/CPU
+        self.register_buffer('cmf', torch.tensor(np.array([(-1)**(i) for i in range(self.lK)])[np.newaxis, np.newaxis, :], dtype=torch.float32))
         self.pad = (self.lK//2-1, self.lK//2)        
         self.kernel, self.position, self.KerFun = self.Kernel_gen(
                             Archi = Archi,
@@ -182,7 +183,11 @@ class Filter(nn.Module):
                             Style=Filt_Style)  
 
         if Filt_Trans == True:
-            self.mask, self.ipad, self.layerSize = self.GetTransposeInfo()
+            mask_list, self.ipad, self.layerSize = self.GetTransposeInfo()
+            # Register masks as buffers so they move with model to GPU/CPU
+            for i, mask in enumerate(mask_list):
+                self.register_buffer(f'mask_{i}', mask)
+            self.mask = [getattr(self, f'mask_{i}') for i in range(len(mask_list))]
             if Filt_Tfree:
                 self.kernelT, _, self.KerFunT = self.Kernel_gen(
                                                 Archi = Archi,
@@ -414,7 +419,7 @@ class Filter(nn.Module):
     #upsampling operation
     def Up_op(self, x, i_lvl):
         UpSig = torch.zeros(
-            x.size(dim=0), 1, self.layerSize[i_lvl], dtype=torch.float32, device=x.device)
+            x.size(dim=0), 1, self.layerSize[i_lvl], dtype=x.dtype, device=x.device)
         for i_batch in range(x.size(dim=0)):
             UpSig[i_batch][0][self.mask[i_lvl]] = x[i_batch][0]
         return UpSig
