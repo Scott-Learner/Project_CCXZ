@@ -28,7 +28,8 @@ class Decomposition(nn.Module):
                  dfactor=[],
                  device=[],
                  no_decomposition=[],
-                 use_amp=[]):
+                 use_amp=[],
+                 per_channel_wavelet=True):
         super(Decomposition, self).__init__()
         self.input_length = input_length
         self.pred_length = pred_length
@@ -41,6 +42,7 @@ class Decomposition(nn.Module):
         self.no_decomposition = no_decomposition
         self.use_amp = use_amp
         self.eps = 1e-5
+        self.per_channel_wavelet = per_channel_wavelet
 
         self.tfactor = tfactor
         self.dfactor = dfactor
@@ -55,23 +57,48 @@ class Decomposition(nn.Module):
             #
             # Filt_Mother is only used for initialization; after that, filters are trainable.
             mother = self.wavelet_name if isinstance(self.wavelet_name, str) else "db4"
-            self.ndwav = NeuralDWAV(
-                Input_Size=self.input_length,
-                Input_Level=self.level,
-                Input_Archi="DWT",          # keep topology compatible with old Decomposition
-                Filt_Trans=True,
-                Filt_Train=True,
-                Filt_Tfree=False,
-                Filt_Style="Filter_Free",
-                Filt_Mother=mother,
-                Act_Train=True,
-                Act_Style="Sigmoid",        # or whatever default you want
-                Act_Symmetric=True,
-                Act_Init=0
-            ).to(self.device)
+            
+            if self.per_channel_wavelet:
+                # Create separate NeuralDWAV instance for each channel
+                # Using Kernel_Free style ensures time-invariant wavelet basis
+                self.ndwav_list = nn.ModuleList([
+                    NeuralDWAV(
+                        Input_Size=self.input_length,
+                        Input_Level=self.level,
+                        Input_Archi="DWT",
+                        Filt_Trans=True,
+                        Filt_Train=True,
+                        Filt_Tfree=False,
+                        Filt_Style="Kernel_Free",  # Time-invariant across decomposition levels
+                        Filt_Mother=mother,
+                        Act_Train=True,
+                        Act_Style="Sigmoid",
+                        Act_Symmetric=True,
+                        Act_Init=0
+                    ).to(self.device)
+                    for _ in range(self.channel)
+                ])
+                self.ndwav = None  # Not used in per-channel mode
+            else:
+                # Original: shared NeuralDWAV for all channels
+                self.ndwav = NeuralDWAV(
+                    Input_Size=self.input_length,
+                    Input_Level=self.level,
+                    Input_Archi="DWT",          # keep topology compatible with old Decomposition
+                    Filt_Trans=True,
+                    Filt_Train=True,
+                    Filt_Tfree=False,
+                    Filt_Style="Layer_Free",
+                    Filt_Mother=mother,
+                    Act_Train=True,
+                    Act_Style="Sigmoid",        # or whatever default you want
+                    Act_Symmetric=True,
+                    Act_Init=0
+                ).to(self.device)
+                self.ndwav_list = None  # Not used in shared mode
 
             # Infer coefficient lengths by doing a dummy forward,
-            # exactly like the original Decomposition did with DWT1DForward. :contentReference[oaicite:1]{index=1}
+            # exactly like the original Decomposition did with DWT1DForward.
             self.input_w_dim = self._dummy_forward(self.input_length)
             self.pred_w_dim = self._scale_pred_dims(self.input_w_dim,
                                                     self.input_length,
@@ -130,18 +157,23 @@ class Decomposition(nn.Module):
         )
         B, C, L = dummy_x.shape
 
-        # NeuralDWAV expects [B', 1, L]; we share filters across channels,
-        # so flatten (B, C) into batch dimension.
-        x = dummy_x.view(B * C, 1, L)
-
-        embeddings = self.ndwav.LDWT(x)  # list of length level+1
+        if self.per_channel_wavelet:
+            # Use first channel's NeuralDWAV to infer dimensions
+            # (all channels should have same output dimensions)
+            x = dummy_x[:, 0:1, :].view(B, 1, L)
+            embeddings = self.ndwav_list[0].LDWT(x)  # list of length level+1
+        else:
+            # NeuralDWAV expects [B', 1, L]; we share filters across channels,
+            # so flatten (B, C) into batch dimension.
+            x = dummy_x.view(B * C, 1, L)
+            embeddings = self.ndwav.LDWT(x)  # list of length level+1
 
         # embeddings[i] is the detail at level i+1, embeddings[level] is A_L.
         l = []
         # low-pass/coarsest approx
         l.append(embeddings[self.level].shape[-1])
         # detail bands, in order matching the original DWT_Decomposition logic:
-        # [yh[0], yh[1], ..., yh[level-1]] :contentReference[oaicite:2]{index=2}
+        # [yh[0], yh[1], ..., yh[level-1]]
         for i in range(self.level):
             l.append(embeddings[i].shape[-1])
         return l
@@ -199,18 +231,45 @@ class Decomposition(nn.Module):
         """
         B, C, T = x.shape
 
-        # Flatten channels into batch, as NeuralDWAV is single-channel.
-        x_flat = x.contiguous().view(B * C, 1, T)
-
-        embeddings = self.ndwav.LDWT(x_flat)
-        # embeddings[0..level-1]: detail bands
-        # embeddings[level]: approximation band
-
-        yl = embeddings[self.level].contiguous().view(B, C, -1)
-        yh = []
-        for i in range(self.level):
-            yh_i = embeddings[i].contiguous().view(B, C, -1)
-            yh.append(yh_i)
+        if self.per_channel_wavelet:
+            # Apply different filters to each channel
+            all_yl = []
+            all_yh = [[] for _ in range(self.level)]
+            
+            for c in range(C):
+                # Extract single channel: [B, 1, T]
+                x_c = x[:, c:c+1, :].contiguous().view(B, 1, T)
+                
+                # Apply channel-specific wavelet transform
+                embeddings = self.ndwav_list[c].LDWT(x_c)
+                # embeddings[0..level-1]: detail bands
+                # embeddings[level]: approximation band
+                
+                # Collect approximation coefficient: [B, 1, L0]
+                yl_c = embeddings[self.level]
+                all_yl.append(yl_c)
+                
+                # Collect detail coefficients: [B, 1, Li] for each level
+                for i in range(self.level):
+                    yh_i_c = embeddings[i]
+                    all_yh[i].append(yh_i_c)
+            
+            # Concatenate across channel dimension
+            yl = torch.cat(all_yl, dim=1)  # [B, C, L0]
+            yh = [torch.cat(all_yh[i], dim=1) for i in range(self.level)]  # list of [B, C, Li]
+        else:
+            # Original: shared filters across all channels
+            x_flat = x.contiguous().view(B * C, 1, T)
+            
+            embeddings = self.ndwav.LDWT(x_flat)
+            # embeddings[0..level-1]: detail bands
+            # embeddings[level]: approximation band
+            
+            yl = embeddings[self.level].contiguous().view(B, C, -1)
+            yh = []
+            for i in range(self.level):
+                yh_i = embeddings[i].contiguous().view(B, C, -1)
+                yh.append(yh_i)
 
         if self.affine:
             yl, yh = self._apply_affine(yl, yh)
@@ -229,14 +288,40 @@ class Decomposition(nn.Module):
         if self.affine:
             yl, yh = self._undo_affine(yl, yh)
 
-        # Build embeddings list in NeuralDWAV's expected order:
-        #   embeddings[0..level-1] = detail bands (same order as in LDWT),
-        #   embeddings[level]      = approximation band.
-        embeddings = [None] * (self.level + 1)
-        for i in range(self.level):
-            embeddings[i] = yh[i].contiguous().view(B * C, 1, -1)
-        embeddings[self.level] = yl.contiguous().view(B * C, 1, -1)
+        if self.per_channel_wavelet:
+            # Apply different inverse filters to each channel
+            all_x = []
+            
+            for c in range(C):
+                # Build embeddings list for this channel in NeuralDWAV's expected order:
+                #   embeddings[0..level-1] = detail bands (same order as in LDWT),
+                #   embeddings[level]      = approximation band.
+                embeddings = [None] * (self.level + 1)
+                
+                # Extract detail coefficients for this channel: [B, 1, Li]
+                for i in range(self.level):
+                    embeddings[i] = yh[i][:, c:c+1, :].contiguous().view(B, 1, -1)
+                
+                # Extract approximation coefficient for this channel: [B, 1, L0]
+                embeddings[self.level] = yl[:, c:c+1, :].contiguous().view(B, 1, -1)
+                
+                # Apply channel-specific inverse transform
+                x_c = self.ndwav_list[c].iLDWT(embeddings)  # [B, 1, T]
+                all_x.append(x_c)
+            
+            # Concatenate across channel dimension
+            x = torch.cat(all_x, dim=1)  # [B, C, T]
+        else:
+            # Original: shared filters across all channels
+            # Build embeddings list in NeuralDWAV's expected order:
+            #   embeddings[0..level-1] = detail bands (same order as in LDWT),
+            #   embeddings[level]      = approximation band.
+            embeddings = [None] * (self.level + 1)
+            for i in range(self.level):
+                embeddings[i] = yh[i].contiguous().view(B * C, 1, -1)
+            embeddings[self.level] = yl.contiguous().view(B * C, 1, -1)
 
-        x_flat = self.ndwav.iLDWT(embeddings)     # [B*C, 1, T]
-        x = x_flat.view(B, C, -1)                 # [B, C, T]
+            x_flat = self.ndwav.iLDWT(embeddings)     # [B*C, 1, T]
+            x = x_flat.view(B, C, -1)                 # [B, C, T]
+        
         return x

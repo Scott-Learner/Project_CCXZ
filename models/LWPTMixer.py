@@ -187,7 +187,8 @@ class WPMixerCore(nn.Module):
                  patch_len=[],
                  patch_stride=[],
                  no_decomposition=[],
-                 use_amp=[]):
+                 use_amp=[],
+                 per_channel_wavelet=True):
         super(WPMixerCore, self).__init__()
         self.input_length = input_length
         self.pred_length = pred_length
@@ -203,6 +204,7 @@ class WPMixerCore(nn.Module):
         self.tfactor = tfactor
         self.dfactor = dfactor
         self.use_amp = use_amp
+        self.per_channel_wavelet = per_channel_wavelet
 
         self.Decomposition_model = Decomposition(input_length=self.input_length,
                                                  pred_length=self.pred_length,
@@ -215,7 +217,8 @@ class WPMixerCore(nn.Module):
                                                  dfactor=self.dfactor,
                                                  device=self.device,
                                                  no_decomposition=self.no_decomposition,
-                                                 use_amp=self.use_amp)
+                                                 use_amp=self.use_amp,
+                                                 per_channel_wavelet=self.per_channel_wavelet)
 
         self.input_w_dim = self.Decomposition_model.input_w_dim  # list of the length of the input coefficient series
         self.pred_w_dim = self.Decomposition_model.pred_w_dim  # list of the length of the predicted coefficient series
@@ -270,7 +273,8 @@ class WPMixerCore(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, args, tfactor=5, dfactor=5, wavelet='db2', level=1, stride=8, no_decomposition=False):
+    def __init__(self, args, tfactor=5, dfactor=5, wavelet='db2', level=3, stride=8, 
+                 no_decomposition=False, per_channel_wavelet=True):
         super(Model, self).__init__()
         self.args = args
         self.task_name = args.task_name
@@ -289,7 +293,8 @@ class Model(nn.Module):
                                        patch_len=self.args.patch_len,
                                        patch_stride=stride,
                                        no_decomposition=no_decomposition,
-                                       use_amp=self.args.use_amp)
+                                       use_amp=self.args.use_amp,
+                                       per_channel_wavelet=per_channel_wavelet)
 
     def forecast(self, x_enc, x_mark_enc, x_dec, batch_y_mark):
         # Normalization

@@ -11,258 +11,404 @@ import warnings
 import numpy as np
 from utils.dtw_metric import dtw, accelerated_dtw
 from utils.augmentation import run_augmentation, run_augmentation_single
+import matplotlib.pyplot as plt
+from layers.NeuralDWAV import NeuralDWAV
 
 warnings.filterwarnings('ignore')
 
+class Generator_dummy_test():  # Stepwise function with gaussian noise
+    """Synthetic data generator for autoencoding task - multi-channel version"""
+    def __init__(self, Np=2**13, num_channels=7):
+        np.random.seed(42)
+        self.Nchange = 5
+        self.Np = Np
+        self.sigma = 0.2
+        self.num_channels = num_channels
+        
+    def __getitem__(self, batchIndex):
+        batchX, batchY = self.generate_batch(batchIndex)
+        # For autoencoding: [batch, seq_len, channel] format like real data
+        # X: noisy, Y: clean
+        return (torch.tensor(batchX).float(), 
+                torch.tensor(batchY).float())
 
-class Exp_Long_Term_Forecast(Exp_Basic):
+    def generate_batch(self, batchIndex):
+        # Generate [batch, seq_len, channel] shaped data
+        batchX = np.zeros((batchIndex, self.Np, self.num_channels))
+        batchY = np.zeros((batchIndex, self.Np, self.num_channels))
+        
+        for batch in range(batchIndex):
+            for ch in range(self.num_channels):
+                # Each channel has independent stepwise signal
+                x = np.random.randn(self.Nchange)
+                y = np.concatenate(([0], np.floor(np.sort(np.random.rand(self.Nchange)) * self.Np).astype(int)))
+                for i in range(self.Nchange):
+                    batchY[batch, y[i]:y[i+1], ch] = x[i]
+                batchX[batch, :, ch] = batchY[batch, :, ch] + self.sigma * np.random.randn(self.Np)
+        
+        return batchX, batchY
+
+class Exp_Autoencoding(Exp_Basic):
+    """Experiment class for autoencoding with NeuralDWAV - per-channel training"""
+    
     def __init__(self, args):
-        super(Exp_Long_Term_Forecast, self).__init__(args)
+        # Set default values for autoencoding task
+        self.args = args
+        
+        # For autoencoding, we use NeuralDWAV directly instead of models from model_dict
+        # Set default parameters if not provided
+        if not hasattr(args, 'seq_len'):
+            args.seq_len = 2**13  # Default signal length
+        if not hasattr(args, 'level'):
+            args.level = 8
+        if not hasattr(args, 'archi'):
+            args.archi = 'DWT'
+        if not hasattr(args, 'num_channels'):
+            args.num_channels = 7  # Default: 7 channels like ETT data
+        if not hasattr(args, 'learning_rate'):
+            args.learning_rate = 0.01  # Same as DESPAWN in LDWT_main
+        if not hasattr(args, 'batch_size'):
+            args.batch_size = 8
+        if not hasattr(args, 'train_epochs'):
+            args.train_epochs = 1000  # Same as LDWT_main
+        if not hasattr(args, 'lambda_l1'):
+            args.lambda_l1 = 1.0  # L1 regularization weight
+        if not hasattr(args, 'patience'):
+            args.patience = 10
+        if not hasattr(args, 'use_amp'):
+            args.use_amp = False
+        if not hasattr(args, 'checkpoints'):
+            args.checkpoints = './checkpoints/'
+        
+        # Don't call parent init, we'll handle device setup manually
+        self.device = self._acquire_device()
+        
+        # Create separate NeuralDWAV model for each channel
+        self.models = []
+        for ch in range(self.args.num_channels):
+            model = self._build_single_model().to(self.device)
+            self.models.append(model)
+        
+        # Create dummy data generator
+        self.generator = Generator_dummy_test(Np=self.args.seq_len, num_channels=self.args.num_channels)
 
-    def _build_model(self):
-        model = self.model_dict[self.args.model].Model(self.args).float()
-
-        if self.args.use_multi_gpu and self.args.use_gpu:
-            model = nn.DataParallel(model, device_ids=self.args.device_ids)
+    def _acquire_device(self):
+        """Acquire computing device"""
+        if hasattr(self.args, 'use_gpu') and self.args.use_gpu:
+            if hasattr(self.args, 'gpu_type') and self.args.gpu_type == 'cuda':
+                os.environ["CUDA_VISIBLE_DEVICES"] = str(self.args.gpu) if not hasattr(self.args, 'use_multi_gpu') or not self.args.use_multi_gpu else self.args.devices
+                device = torch.device('cuda:{}'.format(self.args.gpu))
+                print('Use GPU: cuda:{}'.format(self.args.gpu))
+            elif hasattr(self.args, 'gpu_type') and self.args.gpu_type == 'mps':
+                device = torch.device('mps')
+                print('Use GPU: mps')
+            else:
+                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                print(f'Use GPU: {device}')
+        else:
+            device = torch.device('cpu')
+            print('Use CPU')
+        return device
+    
+    def _build_single_model(self):
+        """Build a single NeuralDWAV model for one channel"""
+        model = NeuralDWAV(
+            Input_Size=self.args.seq_len,
+            Input_Level=self.args.level,
+            Input_Archi=self.args.archi,
+            Filt_Trans=True,
+            Filt_Train=True,
+            Filt_Tfree=False,
+            Filt_Style="Kernel_Free",  # Time-invariant
+            Filt_Mother="db4",
+            Act_Train=True,
+            Act_Style="Sigmoid",
+            Act_Symmetric=True,
+            Act_Init=0
+        ).float()
+        
         return model
-
+    
+    def _build_model(self):
+        """For compatibility with parent class - not used in per-channel training"""
+        return self.models[0] if self.models else None
+    
     def _get_data(self, flag):
-        data_set, data_loader = data_provider(self.args, flag)
-        return data_set, data_loader
-
-    def _select_optimizer(self):
-        model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
+        """Get data from real dataloader or dummy generator"""
+        # For autoencoding, we can use either real data or dummy generator
+        # If using real data, make sure batch_y = batch_x
+        try:
+            data_set, data_loader = data_provider(self.args, flag)
+            return data_set, data_loader
+        except:
+            # If data provider fails, use dummy generator
+            print(f"Using dummy generator for {flag} data")
+            return None, None
+    
+    def _select_optimizer(self, model):
+        """Create optimizer for a single model"""
+        model_optim = optim.Adam(model.parameters(), 
+                                lr=self.args.learning_rate,
+                                betas=(0.9, 0.999), 
+                                eps=1e-7)
         return model_optim
-
+    
     def _select_criterion(self):
-        criterion = nn.MSELoss()
+        # Use L1 loss like DESPAWN in LDWT_main
+        criterion = nn.L1Loss()
         return criterion
- 
-
-    def vali(self, vali_data, vali_loader, criterion):
-        total_loss = []
-        self.model.eval()
-        with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_loader):
-                batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float()
-
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
-                # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                else:
-                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                f_dim = -1 if self.args.features == 'MS' else 0
-                outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-
-                pred = outputs.detach()
-                true = batch_y.detach()
-
-                loss = criterion(pred, true)
-
-                total_loss.append(loss.item())
-        total_loss = np.average(total_loss)
-        self.model.train()
-        return total_loss
-
+    
+    def compare_wavelets(self, ch_idx, batch_x, batch_y, trained_model=None):
+        """
+        Compare different wavelet initializations (db2, db3, db4) with same parameters
+        
+        Args:
+            ch_idx: channel index
+            batch_x: input data [batch, seq_len, channels]
+            batch_y: target data [batch, seq_len, channels]
+            trained_model: the trained model (optional, for comparison)
+        """
+        criterion = self._select_criterion()
+        wavelets = ['db2', 'db3', 'db4']
+        
+        print(f"\n   📊 Comparing wavelets for Channel {ch_idx + 1}:")
+        
+        # Extract single channel
+        x_ch = batch_x[:, :, ch_idx].unsqueeze(1)
+        y_ch = batch_y[:, :, ch_idx].unsqueeze(1)
+        
+        results = {}
+        
+        # Test each wavelet
+        for wavelet_name in wavelets:
+            # Create new model with different wavelet initialization
+            test_model = NeuralDWAV(
+                Input_Size=self.args.seq_len,
+                Input_Level=self.args.level,
+                Input_Archi=self.args.archi,
+                Filt_Trans=True,
+                Filt_Train=True,
+                Filt_Tfree=False,
+                Filt_Style="Kernel_Free",
+                Filt_Mother=wavelet_name,  # Different wavelet
+                Act_Train=True,
+                Act_Style="Sigmoid",
+                Act_Symmetric=True,
+                Act_Init=0
+            ).float().to(self.device)
+            
+            test_model.eval()
+            
+            with torch.no_grad():
+                # Compute loss with untrained model (just initialization)
+                Emb = test_model.T(x_ch)
+                loss_recon = criterion(test_model.iT(Emb), x_ch)
+                loss_sparse = test_model.L1_sum(Emb)
+                loss = loss_recon + self.args.lambda_l1 * loss_sparse
+                
+                results[wavelet_name] = loss.item()
+        
+        # If trained model provided, also show its loss
+        if trained_model is not None:
+            trained_model.eval()
+            with torch.no_grad():
+                Emb = trained_model.T(x_ch)
+                loss_recon = criterion(trained_model.iT(Emb), x_ch)
+                loss_sparse = trained_model.L1_sum(Emb)
+                loss = loss_recon + self.args.lambda_l1 * loss_sparse
+                results['Trained (db4)'] = loss.item()
+        
+        # Print comparison
+        print(f"      Wavelet Init | Loss (Untrained)")
+        print(f"      " + "-" * 35)
+        for wavelet_name in wavelets:
+            print(f"      {wavelet_name:12s} | {results[wavelet_name]:.6f}")
+        
+        if trained_model is not None:
+            print(f"      " + "-" * 35)
+            print(f"      {'Trained (db4)':12s} | {results['Trained (db4)']:.6f}")
+  
+        
+        return results
+    
+    def vali(self, setting=None):
+        """Validation loop for all channels"""
+        criterion = self._select_criterion()
+        channel_losses = []
+        
+        for ch_idx in range(self.args.num_channels):
+            model = self.models[ch_idx]
+            model.eval()
+            
+            total_loss = []
+            with torch.no_grad():
+                num_val_batches = 10
+                for i in range(num_val_batches):
+                    batch_x, batch_y = self.generator.__getitem__(self.args.batch_size)
+                    batch_x = batch_x.to(self.device)
+                    batch_y = batch_y.to(self.device)
+                    
+                    # Extract single channel
+                    x_ch = batch_x[:, :, ch_idx].unsqueeze(1)
+                    
+                    # Dual L1 loss: reconstruction + L1 sparsity
+                    Emb = model.T(x_ch)
+                    loss_recon = criterion(model.iT(Emb), x_ch)
+                    loss_sparse = model.L1_sum(Emb)
+                    loss = loss_recon + self.args.lambda_l1 * loss_sparse
+                    
+                    total_loss.append(loss.item())
+            
+            avg_loss = np.average(total_loss)
+            channel_losses.append(avg_loss)
+            model.train()
+        
+        overall_avg = np.average(channel_losses)
+        print(f"Validation - Overall Loss: {overall_avg:.6f}")
+        
+        return overall_avg
+    
     def train(self, setting):
-        train_data, train_loader = self._get_data(flag='train')
-        vali_data, vali_loader = self._get_data(flag='val')
-        test_data, test_loader = self._get_data(flag='test')
-
+        """Training loop - per-channel independent training like LDWT_main"""
+        print(f"Training {self.args.num_channels} channels independently")
+        print(f"Epochs: {self.args.train_epochs}, Batch size: {self.args.batch_size}, Lambda: {self.args.lambda_l1}")
+        print("=" * 80)
+        
+        # Create checkpoint directory
         path = os.path.join(self.args.checkpoints, setting)
         if not os.path.exists(path):
             os.makedirs(path)
-
-        time_now = time.time()
-
-        train_steps = len(train_loader)
-        early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
-
-        model_optim = self._select_optimizer()
+        
         criterion = self._select_criterion()
+        
+        # Train each channel independently
+        for ch_idx in range(self.args.num_channels):
+            print(f"\n🔹 Training Channel {ch_idx + 1}/{self.args.num_channels}")
+            
+            model = self.models[ch_idx]
+            model_optim = self._select_optimizer(model)
+            model.train()
+            
+            # Training loop (following LDWT_main style)
+            start_time = time.time()
+            
+            for epoch in range(self.args.train_epochs):
+                # Get batch from generator
+                batch_x, batch_y = self.generator.__getitem__(self.args.batch_size)
+                batch_x = batch_x.to(self.device)  # [batch, seq_len, channels]
+                batch_y = batch_y.to(self.device)
+                
+                # Extract single channel: [batch, seq_len] -> [batch, 1, seq_len]
+                x_ch = batch_x[:, :, ch_idx].unsqueeze(1)
+                y_ch = batch_y[:, :, ch_idx].unsqueeze(1)
+                
+                model.zero_grad()
+                
+                # Forward pass with dual L1 loss (like DESPAWN in LDWT_main)
+                Emb = model.T(x_ch)  # Get wavelet coefficients
+                
+                # Loss = reconstruction loss + lambda * L1 sparsity
+                loss_recon = criterion(model.iT(Emb), x_ch)
+                loss_sparse = model.L1_sum(Emb)
+                loss = loss_recon + self.args.lambda_l1 * loss_sparse
+                
+                loss.backward()
+                model_optim.step()
+                
+            # After training, evaluate the channel
+            model.eval()
+            elapsed_time = time.time() - start_time
+            
+            # Final evaluation
+            final_loss = 0.0
+            num_test_batches = 10
+            with torch.no_grad():
+                for _ in range(num_test_batches):
+                    batch_x, batch_y = self.generator.__getitem__(self.args.batch_size)
+                    batch_x = batch_x.to(self.device)
+                    x_ch = batch_x[:, :, ch_idx].unsqueeze(1)
+                    
+                    Emb = model.T(x_ch)
+                    loss_recon = criterion(model.iT(Emb), x_ch)
+                    loss_sparse = model.L1_sum(Emb)
+                    loss = loss_recon + self.args.lambda_l1 * loss_sparse
+                    final_loss += loss.item()
+            
+            final_loss /= num_test_batches
+            
+            print(f"   ✓ Channel {ch_idx + 1} - Final Loss: {final_loss:.6f} | Time: {elapsed_time:.2f}s")
+            
+            # Compare with different wavelets
+            # Get a fresh test batch for comparison
+            test_batch_x, test_batch_y = self.generator.__getitem__(self.args.batch_size)
+            test_batch_x = test_batch_x.to(self.device)
+            test_batch_y = test_batch_y.to(self.device)
+            self.compare_wavelets(ch_idx, test_batch_x, test_batch_y, trained_model=model)
+            
+            # Save model
+            model_path = os.path.join(path, f'channel_{ch_idx}_checkpoint.pth')
+            torch.save(model.state_dict(), model_path)
+        
+        print("\n" + "=" * 80)
+        print("✅ All channels trained successfully!")
+        
+        return self.models
+    
+    def test(self, setting=None, test_loader=None):
+        """Test loop - evaluate all channels"""
+        criterion = self._select_criterion()
+        channel_losses = []
+        
+        for ch_idx in range(self.args.num_channels):
+            model = self.models[ch_idx]
+            model.eval()
+            
+            total_loss = []
+            with torch.no_grad():
+                num_test_batches = 20
+                for i in range(num_test_batches):
+                    batch_x, batch_y = self.generator.__getitem__(self.args.batch_size)
+                    batch_x = batch_x.to(self.device)
+                    
+                    # Extract single channel
+                    x_ch = batch_x[:, :, ch_idx].unsqueeze(1)
+                    
+                    # Dual L1 loss
+                    Emb = model.T(x_ch)
+                    loss_recon = criterion(model.iT(Emb), x_ch)
+                    loss_sparse = model.L1_sum(Emb)
+                    loss = loss_recon + self.args.lambda_l1 * loss_sparse
+                    
+                    total_loss.append(loss.item())
+            
+            avg_loss = np.average(total_loss)
+            channel_losses.append(avg_loss)
+        
+        overall_avg = np.average(channel_losses)
+        print(f"Test - Overall Loss: {overall_avg:.6f}")
+        
+        return overall_avg
 
-        if self.args.use_amp:
-            scaler = torch.cuda.amp.GradScaler()
 
-        for epoch in range(self.args.train_epochs):
-            iter_count = 0
-            train_loss = []
+# Utility functions for visualization
+def npt(x):
+    """Convert torch tensor to numpy array"""
+    return x.detach().cpu().numpy().squeeze()
 
-            self.model.train()
-            epoch_time = time.time()
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
-                iter_count += 1
-                model_optim.zero_grad()
-                batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float().to(self.device)
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
 
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+def plt_x(n, X, L):
+    """Plot signals"""
+    plt.figure(n)
+    for i in range(len(X)):
+        plt.plot(npt(X[i]))
+    plt.legend(L)
+    plt.title('Signal Reconstruction')
+    
 
-                # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
-                        f_dim = -1 if self.args.features == 'MS' else 0
-                        outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                        batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-                        loss = criterion(outputs, batch_y)
-                        train_loss.append(loss.item())
-                else:
-                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
-                    f_dim = -1 if self.args.features == 'MS' else 0
-                    outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                    batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-                    loss = criterion(outputs, batch_y)
-                    train_loss.append(loss.item())
-
-                if (i + 1) % 100 == 0:
-                    print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
-                    speed = (time.time() - time_now) / iter_count
-                    left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
-                    print('\tspeed: {:.4f}s/iter; left time: {:.4f}s'.format(speed, left_time))
-                    iter_count = 0
-                    time_now = time.time()
-
-                if self.args.use_amp:
-                    scaler.scale(loss).backward()
-                    scaler.step(model_optim)
-                    scaler.update()
-                else:
-                    loss.backward()
-                    model_optim.step()
-
-            print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
-            train_loss = np.average(train_loss)
-            vali_loss = self.vali(vali_data, vali_loader, criterion)
-            test_loss = self.vali(test_data, test_loader, criterion)
-
-            print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
-                epoch + 1, train_steps, train_loss, vali_loss, test_loss))
-            early_stopping(vali_loss, self.model, path)
-            if early_stopping.early_stop:
-                print("Early stopping")
-                break
-
-            adjust_learning_rate(model_optim, epoch + 1, self.args)
-
-        best_model_path = path + '/' + 'checkpoint.pth'
-        self.model.load_state_dict(torch.load(best_model_path))
-
-        return self.model
-
-    def test(self, setting, test=0):
-        test_data, test_loader = self._get_data(flag='test')
-        if test:
-            print('loading model')
-            self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
-
-        preds = []
-        trues = []
-        folder_path = './test_results/' + setting + '/'
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-
-        self.model.eval()
-        with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(test_loader):
-                batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float().to(self.device)
-
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
-                # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                else:
-                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
-                f_dim = -1 if self.args.features == 'MS' else 0
-                outputs = outputs[:, -self.args.pred_len:, :]
-                batch_y = batch_y[:, -self.args.pred_len:, :].to(self.device)
-                outputs = outputs.detach().cpu().numpy()
-                batch_y = batch_y.detach().cpu().numpy()
-                if test_data.scale and self.args.inverse:
-                    shape = batch_y.shape
-                    if outputs.shape[-1] != batch_y.shape[-1]:
-                        outputs = np.tile(outputs, [1, 1, int(batch_y.shape[-1] / outputs.shape[-1])])
-                    outputs = test_data.inverse_transform(outputs.reshape(shape[0] * shape[1], -1)).reshape(shape)
-                    batch_y = test_data.inverse_transform(batch_y.reshape(shape[0] * shape[1], -1)).reshape(shape)
-
-                outputs = outputs[:, :, f_dim:]
-                batch_y = batch_y[:, :, f_dim:]
-
-                pred = outputs
-                true = batch_y
-
-                preds.append(pred)
-                trues.append(true)
-                if i % 20 == 0:
-                    input = batch_x.detach().cpu().numpy()
-                    if test_data.scale and self.args.inverse:
-                        shape = input.shape
-                        input = test_data.inverse_transform(input.reshape(shape[0] * shape[1], -1)).reshape(shape)
-                    gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
-                    pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
-                    visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
-
-        preds = np.concatenate(preds, axis=0)
-        trues = np.concatenate(trues, axis=0)
-        print('test shape:', preds.shape, trues.shape)
-        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-        trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-        print('test shape:', preds.shape, trues.shape)
-
-        # result save
-        folder_path = './results/' + setting + '/'
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-
-        # dtw calculation
-        if self.args.use_dtw:
-            dtw_list = []
-            manhattan_distance = lambda x, y: np.abs(x - y)
-            for i in range(preds.shape[0]):
-                x = preds[i].reshape(-1, 1)
-                y = trues[i].reshape(-1, 1)
-                if i % 100 == 0:
-                    print("calculating dtw iter:", i)
-                d, _, _, _ = accelerated_dtw(x, y, dist=manhattan_distance)
-                dtw_list.append(d)
-            dtw = np.array(dtw_list).mean()
-        else:
-            dtw = 'Not calculated'
-
-        mae, mse, rmse, mape, mspe = metric(preds, trues)
-        print('mse:{}, mae:{}, dtw:{}'.format(mse, mae, dtw))
-        f = open("result_long_term_forecast.txt", 'a')
-        f.write(setting + "  \n")
-        f.write('mse:{}, mae:{}, dtw:{}'.format(mse, mae, dtw))
-        f.write('\n')
-        f.write('\n')
-        f.close()
-
-        np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
-        np.save(folder_path + 'pred.npy', preds)
-        np.save(folder_path + 'true.npy', trues)
-
-        return
+def plt_Emb(n, X, L):
+    """Plot embeddings/spectrograms"""
+    plt.figure(n, figsize=(8, 12))
+    fig, axs = plt.subplots(2)
+    for i in range(len(X)):
+        axs[i].imshow(20 * np.log10(npt(X[i]) + 1e-3), aspect="auto")
+        axs[i].set_title(L[i])
