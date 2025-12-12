@@ -421,12 +421,12 @@ class Exp_Autoencoding(Exp_Basic):
             recons = []
 
             # ---- 2. Build x0, x1, ..., xL ----
-            for keep_up_to in range(L + 1): 
+            for delete_until in range(L+1, -1, -1): # before: range(L+1) 
                 D_used = []
                 for j in range(L):
-                    if j < keep_up_to: # Layers used in reconstruction
+                    if j >= delete_until: # Levels [delete_until, ..., L] used in reconstruction
                         D_used.append(D_list[j])
-                    else: # Layers left out in reconstruction
+                    else: # Levels [0, ..., delete_until-1] left out in reconstruction
                         D_used.append(torch.zeros_like(D_list[j])) 
 
                 Emb_k = {'A': A, 'D': D_used}
