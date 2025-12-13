@@ -1,5 +1,7 @@
 # Project_CCXZ: Learnable Wavelet Transformer for Time-Series Forecasting
 We try our best to beat SOTA in this project for Penn course ESE_5380.
+This repository is modified based on the Time-Series-Library by Tsinghua University.
+
 
 ## Usage
 
@@ -17,7 +19,7 @@ pip install -r requirements.txt
 
 3. Train and evaluate the model. We provide the experiment scripts for all benchmarks under the folder `./scripts/`. You can reproduce the experiment results as the following examples:
 
-```
+```bash
 # long-term forecast
 bash ./scripts/long_term_forecast/ETT_script/TimesNet_ETTh1.sh
 # short-term forecast
@@ -29,6 +31,66 @@ bash ./scripts/anomaly_detection/PSM/TimesNet.sh
 # classification
 bash ./scripts/classification/TimesNet.sh
 ```
+
+### WPMixer with Pretrained Wavelet Decomposition
+
+Our **PretrainedWPMixer** model integrates pretrained wavelet decomposition learned from self-supervised autoencoding. Here's the complete training pipeline:
+
+#### Option A: Automated Pipeline (Recommended)
+
+Run the complete pipeline for all ETT datasets:
+
+```bash
+bash scripts/run_all_ETT_experiments.sh
+```
+
+This script automatically performs for each dataset (ETTh1, ETTh2, ETTm1, ETTm2):
+1. Train LWPTMixer baseline
+2. Train self-supervised wavelet autoencoder (generates parallel checkpoints)
+3. Train PretrainedWPMixer using the pretrained wavelet weights
+
+#### Option B: Manual Step-by-Step Training
+
+**Step 1: Train Baseline WPMixer**
+
+```bash
+# Example: ETTh1 dataset
+bash scripts/long_term_forecast/ETT_script/WPMixer_ETTh1.sh
+```
+
+**Step 2: Train Self-Supervised Wavelet Autoencoder**
+
+```bash
+# This generates pretrained wavelet weights for decomposition
+bash scripts/autoencoding/ETT_script/NeuralDWAV_ETTh1.sh
+
+# Checkpoint will be saved to: ./checkpoints/autoencoding/ETTh1/parallel_checkpoint.pth
+```
+
+**Step 3: Train PretrainedWPMixer with Frozen Wavelet Weights**
+
+```bash
+# This model loads and freezes the pretrained wavelet weights
+bash scripts/long_term_forecast/ETT_script/PretrainedWPMixer_ETTh1_parallel.sh
+
+# The wavelet parameters are frozen by default (freeze_wavelet=True)
+```
+
+#### Key Features
+
+- **Frozen Wavelet Layers**: The pretrained wavelet decomposition is frozen during forecasting training
+- **Parallel Checkpoints**: Supports efficient parallel training across multiple channels
+- **Consistent Normalization**: Both autoencoder and forecaster use the same normalization scheme
+- **Verified Weight Freezing**: The model automatically verifies that wavelet parameters are correctly frozen
+
+#### Performance
+
+Our experiments show:
+- **WPMixer**: Baseline performance (best)
+- **PretrainedWPMixer**: Comparable to WPMixer (0.5-2% difference)
+- **LWPTMixer**: Slightly lower than PretrainedWPMixer (1-3% difference)
+
+See `result_long_term_forecast.txt` for detailed metrics on all ETT datasets.
 
 4. Develop your own model.
 
