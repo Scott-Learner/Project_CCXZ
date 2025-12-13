@@ -196,17 +196,29 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 else:
                     outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
 
+                # NaN check after model forward
+                if torch.isnan(outputs).any():
+                    print(f"⚠️  NaN in outputs at batch {i}")
+                
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, :]
                 batch_y = batch_y[:, -self.args.pred_len:, :].to(self.device)
                 outputs = outputs.detach().cpu().numpy()
                 batch_y = batch_y.detach().cpu().numpy()
+                
+                # NaN check after conversion
+                if np.isnan(outputs).any():
+                    print(f"⚠️  NaN in outputs (numpy) at batch {i}")
                 if test_data.scale and self.args.inverse:
                     shape = batch_y.shape
                     if outputs.shape[-1] != batch_y.shape[-1]:
                         outputs = np.tile(outputs, [1, 1, int(batch_y.shape[-1] / outputs.shape[-1])])
                     outputs = test_data.inverse_transform(outputs.reshape(shape[0] * shape[1], -1)).reshape(shape)
                     batch_y = test_data.inverse_transform(batch_y.reshape(shape[0] * shape[1], -1)).reshape(shape)
+                    
+                    # NaN check after inverse transform
+                    if np.isnan(outputs).any():
+                        print(f"⚠️  NaN after inverse transform at batch {i}")
 
                 outputs = outputs[:, :, f_dim:]
                 batch_y = batch_y[:, :, f_dim:]
@@ -231,6 +243,11 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
         trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
         print('test shape:', preds.shape, trues.shape)
+        
+        # Final NaN check
+        if np.isnan(preds).any():
+            nan_count = np.isnan(preds).sum()
+            print(f"⚠️  Total NaN in predictions: {nan_count} / {preds.size}")
 
         # result save
         folder_path = './results/' + setting + '/'

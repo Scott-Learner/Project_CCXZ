@@ -15,7 +15,7 @@ import torch.nn as nn
 from layers.NeuralDWAV import NeuralDWAV
 
 
-class Decomposition(nn.Module):
+class LWPT_Decomposition(nn.Module):
     def __init__(self,
                  input_length=[],
                  pred_length=[],
@@ -30,7 +30,7 @@ class Decomposition(nn.Module):
                  no_decomposition=[],
                  use_amp=[],
                  per_channel_wavelet=True):
-        super(Decomposition, self).__init__()
+        super(LWPT_Decomposition, self).__init__()
         self.input_length = input_length
         self.pred_length = pred_length
         self.wavelet_name = wavelet_name

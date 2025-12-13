@@ -37,6 +37,9 @@ for i in "${!pred_lens[@]}"; do
 		--seq_len ${seq_lens[$i]} \
 		--pred_len ${pred_lens[$i]} \
 		--label_len 0 \
+		--enc_in 321 \
+		--dec_in 321 \
+		--c_out 321 \
 		--d_model ${d_models[$i]} \
 		--patch_len ${patch_lens[$i]} \
 		--batch_size ${batches[$i]} \

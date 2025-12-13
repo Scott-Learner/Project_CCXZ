@@ -4,11 +4,20 @@ from data_provider.uea import collate_fn
 from torch.utils.data import DataLoader
 
 data_dict = {
+    # ETT datasets
     'ETTh1': Dataset_ETT_hour,
     'ETTh2': Dataset_ETT_hour,
     'ETTm1': Dataset_ETT_minute,
     'ETTm2': Dataset_ETT_minute,
+    # Custom datasets (support multiple naming conventions)
+    'ECL': Dataset_Custom,
+    'electricity': Dataset_Custom,  # alias for ECL
+    'Traffic': Dataset_Custom,
+    'traffic': Dataset_Custom,      # alias for Traffic
+    'Weather': Dataset_Custom,
+    'weather': Dataset_Custom,      # alias for Weather
     'custom': Dataset_Custom,
+    # Other datasets
     'm4': Dataset_M4,
     'PSM': PSMSegLoader,
     'MSL': MSLSegLoader,

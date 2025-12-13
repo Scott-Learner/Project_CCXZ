@@ -34,6 +34,8 @@ if __name__ == '__main__':
     parser.add_argument('--freq', type=str, default='h',
                         help='freq for time features encoding, options:[s:secondly, t:minutely, h:hourly, d:daily, b:business days, w:weekly, m:monthly], you can also use more detailed freq like 15min or 3h')
     parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location of model checkpoints')
+    parser.add_argument('--pretrained_ckpt', type=str, default='./checkpoints/autoencoding',
+                        help='path to pretrained autoencoding checkpoints (per dataset)')
 
     # forecasting task
     parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
@@ -130,6 +132,11 @@ if __name__ == '__main__':
 
     # TimeXer
     parser.add_argument('--patch_len', type=int, default=16, help='patch length')
+    parser.add_argument('--patch_stride', type=int, default=8, help='patch stride')
+    
+    # Wavelet parameters for PretrainedWPMixer
+    parser.add_argument('--wavelet_level', type=int, default=1, help='wavelet decomposition level for PretrainedWPMixer')
+    parser.add_argument('--wavelet_name', type=str, default='db2', help='wavelet name for PretrainedWPMixer')
 
     # GCN
     parser.add_argument('--node_dim', type=int, default=10, help='each node embbed to dim dimentions')

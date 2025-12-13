@@ -2,7 +2,7 @@ import os
 import torch
 from models import Autoformer, Transformer, TimesNet, DLinear, FEDformer, \
     Informer, PatchTST, FreTS, TimeMixer, TSMixer, \
-    WPMixer, WPMixer_MultiWavelet, LWPTMixer
+    WPMixer, WPMixer_MultiWavelet, LWPTMixer, PretrainedWPMixer, PretrainedWPMixer_raw
 
 
 class Exp_Basic(object):
@@ -22,6 +22,8 @@ class Exp_Basic(object):
             'WPMixer': WPMixer,
             'WPMixer_MultiWavelet': WPMixer_MultiWavelet,
             'LWPTMixer': LWPTMixer,  # NeuralDWAV-based WPMixer
+            'PretrainedWPMixer': PretrainedWPMixer,  # Pretrained wavelet (parallel checkpoint)
+            'PretrainedWPMixer_raw': PretrainedWPMixer_raw,  # Pretrained wavelet (serial checkpoint)
         }
 
         self.device = self._acquire_device()

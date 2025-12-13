@@ -6,34 +6,46 @@
 
 export CUDA_VISIBLE_DEVICES=0
 
-# Task name
+# Basic config
 task_name=autoencoding
 model_name=NeuralDWAV
 data=ETTh1
 
-# Signal parameters
-seq_len=8192           # 2^13 - signal length
-level=3                # Wavelet decomposition level (changed to 3 for faster testing)
-num_channels=7         # Number of channels (like ETT data)
+# Data paths
+root_path='./data/ETT/'
+data_path='ETTh1.csv'
+features='M'
+
+# Autoencoding parameters
+seq_len=8192           # Signal length (2^13)
+level=3                # Wavelet decomposition level
+num_channels=7         # Number of channels
 archi=DWT              # Architecture: DWT or WPT
+wavelet=db2            # Wavelet type: db2, db3, db4, etc.
 
-# Training parameters (following LDWT_main DESPAWN)
-learning_rate=0.01     # Same as DESPAWN
+# Training parameters
+learning_rate=0.01     # Optimizer learning rate
 lambda_l1=1.0          # L1 sparsity regularization weight
-batch_size=32           # Small batch size works better
-train_epochs=1000      # 1000 epochs per channel
+batch_size=32          # Batch size
+train_epochs=1000      # Train epochs per channel
+patience=20            # Early stopping patience
 
-# Other settings
-patience=20
+# Experiment settings
 itr=1
 des='autoencoding_db4'
+
+# Use real data or dummy generator (remove --use_real_data to use dummy generator)
+use_real_data_flag=""   # Set to "--use_real_data" to use real dataset
 
 echo "========================================"
 echo "NeuralDWAV Autoencoding Training"
 echo "========================================"
+echo "Data: $data"
 echo "Signal Length: $seq_len"
 echo "Level: $level"
+echo "Wavelet: $wavelet"
 echo "Channels: $num_channels"
+echo "Batch Size: $batch_size"
 echo "Learning Rate: $learning_rate"
 echo "Lambda L1: $lambda_l1"
 echo "Epochs per channel: $train_epochs"
@@ -45,9 +57,13 @@ python -u run_autoencoding.py \
   --model_id autoencoding_${data}_${seq_len}_L${level} \
   --model $model_name \
   --data $data \
+  --root_path $root_path \
+  --data_path $data_path \
+  --features $features \
   --seq_len $seq_len \
   --level $level \
   --archi $archi \
+  --wavelet $wavelet \
   --num_channels $num_channels \
   --learning_rate $learning_rate \
   --lambda_l1 $lambda_l1 \
@@ -57,6 +73,7 @@ python -u run_autoencoding.py \
   --gpu 0 \
   --checkpoints './checkpoints/' \
   --des $des \
-  --itr $itr
+  --itr $itr \
+  $use_real_data_flag
 
 
