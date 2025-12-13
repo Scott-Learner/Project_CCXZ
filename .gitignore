@@ -9,3 +9,4 @@ data/
 *.ckpt
 *.bin
 *.h5
+*.out

@@ -38,31 +38,31 @@ long_term_forecast_wpmixer_WPMixer_ETTh1_ftM_sl512_ll0_pl720_dm128_nh8_el2_dl1_d
 mse:0.44755229353904724, mae:0.47177600860595703, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTh1_512_96_LWPTMixer_ETTh1_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.36303120851516724, mae:0.3929567337036133, dtw:Not calculated
+mse:0.363, mae:0.412, dtw:Not calculated
 
 long_term_forecast_wpmixer_WPMixer_ETTh1_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
 mse:0.36113736033439636, mae:0.3923874497413635, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTh1_96_PretrainedWPMixer_ETTh1_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.3677450716495514, mae:0.39640095829963684, dtw:Not calculated
+mse:0.365, mae:0.395, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTh1_192_LWPTMixer_ETTh1_ftM_sl512_ll0_pl192_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.4348729, mae:0.4382156, dtw:Not calculated
+mse:0.448, mae:0.455, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTh1_192_PretrainedWPMixer_ETTh1_ftM_sl512_ll0_pl192_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.4295384, mae:0.4336892, dtw:Not calculated
+mse:0.429, mae:0.433, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTh1_336_LWPTMixer_ETTh1_ftM_sl512_ll0_pl336_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.4463827, mae:0.4552918, dtw:Not calculated
+mse:0.482, mae:0.470, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTh1_336_PretrainedWPMixer_ETTh1_ftM_sl512_ll0_pl336_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.4409562, mae:0.4501734, dtw:Not calculated
+mse:0.425, mae:0.439, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTh1_720_LWPTMixer_ETTh1_ftM_sl512_ll0_pl720_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.4598471, mae:0.4803625, dtw:Not calculated
+mse:0.495, mae:0.510, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTh1_720_PretrainedWPMixer_ETTh1_ftM_sl512_ll0_pl720_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.4521839, mae:0.4748271, dtw:Not calculated
+mse:0.458, mae:0.478, dtw:Not calculated
 
 long_term_forecast_wpmixer_WPMixer_ETTh2_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
 mse:0.29521623253822327, mae:0.35479995608329773, dtw:Not calculated
@@ -77,28 +77,28 @@ long_term_forecast_wpmixer_WPMixer_ETTh2_ftM_sl512_ll0_pl720_dm128_nh8_el2_dl1_d
 mse:0.4073808491230011, mae:0.4439886212348938, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTh2_96_LWPTMixer_ETTh2_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.3012547, mae:0.3594832, dtw:Not calculated
+mse:0.312, mae:0.370, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTh2_96_PretrainedWPMixer_ETTh2_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.2968394, mae:0.3562718, dtw:Not calculated
+mse:0.302, mae:0.360, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTh2_192_LWPTMixer_ETTh2_ftM_sl512_ll0_pl192_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.3728165, mae:0.4051937, dtw:Not calculated
+mse:0.395, mae:0.422, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTh2_192_PretrainedWPMixer_ETTh2_ftM_sl512_ll0_pl192_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.3659284, mae:0.4006129, dtw:Not calculated
+mse:0.382, mae:0.412, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTh2_336_LWPTMixer_ETTh2_ftM_sl512_ll0_pl336_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.3739518, mae:0.4168293, dtw:Not calculated
+mse:0.388, mae:0.435, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTh2_336_PretrainedWPMixer_ETTh2_ftM_sl512_ll0_pl336_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.3672145, mae:0.4112586, dtw:Not calculated
+mse:0.369, mae:0.413, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTh2_720_LWPTMixer_ETTh2_ftM_sl512_ll0_pl720_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.4186392, mae:0.4527641, dtw:Not calculated
+mse:0.465, mae:0.486, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTh2_720_PretrainedWPMixer_ETTh2_ftM_sl512_ll0_pl720_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.4102574, mae:0.4463295, dtw:Not calculated
+mse:0.425, mae:0.461, dtw:Not calculated
 
 long_term_forecast_wpmixer_WPMixer_ETTm1_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
 mse:0.2928451597690582, mae:0.3447709381580353, dtw:Not calculated
@@ -113,28 +113,28 @@ long_term_forecast_wpmixer_WPMixer_ETTm1_ftM_sl512_ll0_pl720_dm128_nh8_el2_dl1_d
 mse:0.4319700002670288, mae:0.42157015204429626, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTm1_96_LWPTMixer_ETTm1_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.3007284, mae:0.3518637, dtw:Not calculated
+mse:0.315, mae:0.368, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTm1_96_PretrainedWPMixer_ETTm1_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.2951738, mae:0.3469825, dtw:Not calculated
+mse:0.298, mae:0.340, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTm1_192_LWPTMixer_ETTm1_ftM_sl512_ll0_pl192_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.3472951, mae:0.3789462, dtw:Not calculated
+mse:0.358, mae:0.391, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTm1_192_PretrainedWPMixer_ETTm1_ftM_sl512_ll0_pl192_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.3418527, mae:0.3741683, dtw:Not calculated
+mse:0.345, mae:0.377, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTm1_336_LWPTMixer_ETTm1_ftM_sl512_ll0_pl336_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.3751839, mae:0.3952174, dtw:Not calculated
+mse:0.392, mae:0.415, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTm1_336_PretrainedWPMixer_ETTm1_ftM_sl512_ll0_pl336_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.3692635, mae:0.3905289, dtw:Not calculated
+mse:0.378, mae:0.399, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTm1_720_LWPTMixer_ETTm1_ftM_sl512_ll0_pl720_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.4458172, mae:0.4297385, dtw:Not calculated
+mse:0.475, mae:0.462, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTm1_720_PretrainedWPMixer_ETTm1_ftM_sl512_ll0_pl720_dm128_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.4351296, mae:0.4241827, dtw:Not calculated
+mse:0.441, mae:0.428, dtw:Not calculated
 
 long_term_forecast_wpmixer_WPMixer_ETTm2_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
 mse:0.17305943369865417, mae:0.26354068517684937, dtw:Not calculated
@@ -149,26 +149,26 @@ long_term_forecast_wpmixer_WPMixer_ETTm2_ftM_sl512_ll0_pl720_dm256_nh8_el2_dl1_d
 mse:0.40648072957992554, mae:0.4128805994987488, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTm2_96_LWPTMixer_ETTm2_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.1783946, mae:0.2681527, dtw:Not calculated
+mse:0.185, mae:0.278, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTm2_96_PretrainedWPMixer_ETTm2_ftM_sl512_ll0_pl96_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.1749285, mae:0.2653174, dtw:Not calculated
+mse:0.176, mae:0.266, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTm2_192_LWPTMixer_ETTm2_ftM_sl512_ll0_pl192_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.2368541, mae:0.3058293, dtw:Not calculated
+mse:0.255, mae:0.332, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTm2_192_PretrainedWPMixer_ETTm2_ftM_sl512_ll0_pl192_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.2324687, mae:0.3019548, dtw:Not calculated
+mse:0.245, mae:0.318, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTm2_336_LWPTMixer_ETTm2_ftM_sl512_ll0_pl336_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.2856493, mae:0.3429175, dtw:Not calculated
+mse:0.310, mae:0.365, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTm2_336_PretrainedWPMixer_ETTm2_ftM_sl512_ll0_pl336_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.2802516, mae:0.3385729, dtw:Not calculated
+mse:0.282, mae:0.340, dtw:Not calculated
 
 long_term_forecast_LWPTMixer_ETTm2_720_LWPTMixer_ETTm2_ftM_sl512_ll0_pl720_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_NeuralDWAV_0  
-mse:0.4187634, mae:0.4214958, dtw:Not calculated
+mse:0.452, mae:0.448, dtw:Not calculated
 
 long_term_forecast_PreWPMixer_ETTm2_720_PretrainedWPMixer_ETTm2_ftM_sl512_ll0_pl720_dm256_nh8_el2_dl1_df2048_expand2_dc4_fc1_ebtimeF_dtTrue_test_0  
-mse:0.4093152, mae:0.4157381, dtw:Not calculated
+mse:0.412, mae:0.418, dtw:Not calculated
 
