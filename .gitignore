@@ -5,6 +5,7 @@ logs/
 outputs/
 checkpoints/
 data/
+results/
 *.pt
 *.ckpt
 *.bin
